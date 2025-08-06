@@ -31,9 +31,16 @@ server.post('/api/party/:partyId/guest/:guest/track/:trackId/detraction', onPost
 server.listen(port, onServerReady);
 
 const tracks = [
-    { trackId: 0, artist: 'Alanis Morisette', name: 'Hands Clean', duration: 12322 },
-    { trackId: 1, artist: 'Michael Jackson', name: 'Bad', duration: 11958 },
-    { trackId: 2, artist: 'Pink Floyd', name: 'Hey You', duration: 14583 },
+  { trackId: 0, name: "Blinding Lights", artist: "The Weeknd", duration: 20004 },
+  { trackId: 1, name: "Shape of You", artist: "Ed Sheeran", duration: 23371 },
+  { trackId: 2, name: "Rolling in the Deep", artist: "Adele", duration: 22829 },
+  { trackId: 3, name: "Bad Guy", artist: "Billie Eilish", duration: 19408 },
+  { trackId: 4, name: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars", duration: 26929 },
+  { trackId: 5, name: "Can't Feel My Face", artist: "The Weeknd", duration: 21394 },
+  { trackId: 6, name: "Levitating", artist: "Dua Lipa", duration: 20306 },
+  { trackId: 7, name: "Radioactive", artist: "Imagine Dragons", duration: 18600 },
+  { trackId: 8, name: "Happy", artist: "Pharrell Williams", duration: 23394 },
+  { trackId: 9, name: "Old Town Road", artist: "Lil Nas X", duration: 15700 },
 ];
 
 function trackElapsedTimes() {

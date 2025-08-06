@@ -31,7 +31,7 @@ function wireUpParty() {
 async function pollForPartyUpdates() {
     const party = await http.getResource(`/api/party/${partyId}/guest/${name}`);
     updateParty(party);
-    setTimeout(async () => await pollForPartyUpdates(partyId), 2000);
+    setTimeout(async () => await pollForPartyUpdates(partyId), 3000);
 }
 
 function trackElapsedTime() {
