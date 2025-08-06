@@ -1,0 +1,164 @@
+import express from 'express';
+import pg from 'pg';
+import dotenv from 'dotenv';
+
+dotenv.config();
+console.log('Connecting to database', process.env.PG_DATABASE);
+const db = new pg.Pool({
+    host: process.env.PG_HOST,
+    port: parseInt(process.env.PG_PORT),
+    database: process.env.PG_DATABASE,
+    user: process.env.PG_USER,
+    password: process.env.PG_PASSWORD,
+    ssl: { rejectUnauthorized: false },
+});
+const dbResult = await db.query('select now()');
+console.log('Database connection established on', dbResult.rows[0].now);
+
+const port = process.env.PORT || 3000;
+const server = express();
+
+const parties = new Map();
+trackElapsedTimes();
+
+server.use(express.static('frontend'));
+server.use(express.json());
+server.use(onEachRequest);
+server.get('/api/party/:partyId/guest/:guest', onGetParty);
+server.delete('/api/party/:partyId/guest/:guest', onDeleteParty);
+server.post('/api/party/:partyId/guest/:guest/track/:trackId/support', onPostTrackSupport);
+server.post('/api/party/:partyId/guest/:guest/track/:trackId/detraction', onPostTrackDetraction);
+server.listen(port, onServerReady);
+
+const tracks = [
+    { trackId: 0, artist: 'Alanis Morisette', name: 'Hands Clean', duration: 12322 },
+    { trackId: 1, artist: 'Michael Jackson', name: 'Bad', duration: 11958 },
+    { trackId: 2, artist: 'Pink Floyd', name: 'Hey You', duration: 14583 },
+];
+
+function trackElapsedTimes() {
+    const now = Date.now();
+    parties.forEach((party) => {
+        const track = tracks[party.nowPlaying.trackId];
+        const started = party.nowPlaying.started;
+        const elapsed = now - started;
+        if (track.duration < elapsed) {
+            selectNextTrack(party);
+        }
+    });
+    setTimeout(() => trackElapsedTimes(), 100);
+}
+
+function ensurePartyExists(partyId, guest) {
+    const party = parties.get(partyId) || createNewParty(partyId);
+    party.guests.add(guest);
+    return party;
+}
+
+function createNewParty(partyId) {
+    const party = {
+        guests: new Set(),
+        nowPlaying: null,
+        supported: new Set(),
+        detracted: new Set(),
+        alreadyPlayed: new Set(),
+        pool: new Set(tracks.map((track) => track.trackId)),
+    };
+    selectNextTrack(party);
+    parties.set(partyId, party);
+    return party;
+}
+
+async function onDeleteParty(request, response) {
+    const partyId = request.params.partyId;
+    const guest = request.params.guest;
+    const party = parties.get(partyId)
+    if (party) {
+       party.guests.delete(guest);
+    }
+    response.end();
+}
+
+async function onGetParty(request, response) {
+    const partyId = request.params.partyId;
+    const guest = request.params.guest;
+    const party = ensurePartyExists(partyId, guest);
+    const track = tracks[party.nowPlaying.trackId];
+    const started = party.nowPlaying.started;
+    const recommendation = pickRandomFromPrioritized([party.pool.union(party.supported).union(party.detracted), party.alreadyPlayed]);
+    response.json({
+        partyId,
+        guestCount: party.guests.size,
+        nowPlaying: {
+            started,
+            ...track,
+        },
+        recommendation: tracks[recommendation],
+    });
+}
+
+async function onPostTrackSupport(request, response) {
+    const partyId = request.params.partyId;
+    const guest = request.params.guest;
+    const trackId = request.params.trackId;
+    const party = ensurePartyExists(partyId, guest);
+    if (party.detracted.has(trackId)) {
+        party.detracted.delete(trackId);
+        party.pool.add(trackId);
+    } else if (party.pool.has(trackId)) {
+        party.pool.delete(trackId);
+        party.supported.add(trackId);
+    }
+    response.end();
+}
+
+async function onPostTrackDetraction(request, response) {
+    const partyId = request.params.partyId;
+    const guest = request.params.guest;
+    const trackId = request.params.trackId;
+    const party = ensurePartyExists(partyId, guest);
+    if (party.supported.has(trackId)) {
+        party.supported.delete(trackId);
+        party.pool.add(trackId);
+    } else if (party.pool.has(trackId)) {
+        party.pool.delete(trackId);
+        party.detracted.add(trackId);
+    }
+    response.end();
+}
+
+function selectNextTrack(party) {
+    if (party.alreadyPlayed.size === tracks.length) {
+        party.alreadyPlayed.clear();
+        party.pool = new Set(tracks.map((track) => track.trackId));
+    }
+    const trackId = pickRandomFromPrioritized([party.supported, party.pool, party.alreadyPlayed, party.detracted]);
+    party.pool.delete(trackId);
+    party.supported.delete(trackId);
+    party.detracted.delete(trackId);
+    party.alreadyPlayed.add(trackId);
+    party.nowPlaying = { trackId, started: Date.now() };
+}
+
+function pickRandomFromPrioritized(trackIdSets) {
+    for (const trackIdSet of trackIdSets) {
+        if (trackIdSet.size > 0) {
+            return pickRandom(trackIdSet);
+        }
+    }
+    throw new Error('Cannot pick random from', trackIdSets);
+}
+
+function pickRandom(iterable) {
+    const a = Array.isArray(iterable) ? iterable : [...iterable];
+    return a[Math.floor(Math.random() * a.length)];
+}
+
+function onEachRequest(request, response, next) {
+    console.log(new Date(), request.method, request.url);
+    next();
+}
+
+function onServerReady() {
+    console.log('Webserver running on port', port);
+}

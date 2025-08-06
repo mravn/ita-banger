@@ -1,0 +1,16 @@
+{
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "reset": "node db/reset.js",
+        "dev": "nodemon backend/server.js",
+        "start": "node backend/server.js"
+    },
+    "dependencies": {
+        "express": "5.1.0",
+        "nodemon": "3.1.10",
+        "pg": "8.16.3",
+        "dotenv": "17.2.1",
+        "pg-upload": "0.0.6"
+    }
+}
