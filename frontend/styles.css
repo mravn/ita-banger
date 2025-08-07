@@ -2,7 +2,7 @@ body {
     background-color: #333;
     color: #ccc;
     font-family: sans-serif;
-    font-size: 36px;
+    font-size: 2.5vw;
 }
 
 p {
@@ -11,13 +11,13 @@ p {
 }
 
 #content {
-    padding-top: 2rem;
+    padding-top: 2vw;
     max-width: min(80vw, 50ch);
     margin: auto;
 }
 
 #content, #partyContainer, #nowPlayingContainer, #nowPlayingElapsedBar, #suggestionContainer {
-    margin-top: 1rem;
+    margin-top: 1vw;
 }
 
 #name, #partyCode, #guestCount, .track, .artist, #nowPlayingElapsedText, #suggestionVotes {
@@ -60,7 +60,7 @@ p {
 }
 
 #nowPlayingElapsedText {
-    font-size: 24px;
+    font-size: 1.5vw;
 }
 
 #nowPlayingElapsedContainer {
@@ -71,7 +71,7 @@ p {
 #suggestionContainer {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1vw;
 }
 
 #suggestionLineContainer {
@@ -80,7 +80,6 @@ p {
 }
 
 #reactionContainer {
-    min-height: 6rem;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -122,7 +121,7 @@ button:hover {
 }
 
 #joinOther {
-    margin-top: 4rem;
+    margin-top: 4vw;
 }
 
 @media only screen and (min-width: 1024px) {
@@ -144,9 +143,5 @@ button:hover {
     #support, #detract {
         min-width: 3ch;
         font-size: inherit;
-    }
-
-    #qr {
-        max-width: 5rem;
     }
 }
