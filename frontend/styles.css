@@ -14,7 +14,7 @@ p {
     margin: auto;
 }
 
-#partyContainer, #partySize, #nowPlayingContainer, #suggestionContainer {
+#content, #partyContainer, #partySize, #nowPlayingContainer, #suggestionContainer {
     margin-top: 1rem;
 }
 
