@@ -38,6 +38,10 @@ export function suggestedArtist() {
     return document.getElementById('suggestedArtist');
 }
 
+export function suggestionVotes() {
+    return document.getElementById('suggestionVotes');
+}
+
 export function supportButton() {
     return document.getElementById('support');
 }

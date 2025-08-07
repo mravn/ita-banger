@@ -20,7 +20,7 @@ p {
     margin-top: 1rem;
 }
 
-#name, #partyCode, #guestCount, .track, .artist, #nowPlayingElapsedText {
+#name, #partyCode, #guestCount, .track, .artist, #nowPlayingElapsedText, #suggestionVotes {
     color: greenyellow;
 }
 
@@ -60,7 +60,7 @@ p {
 }
 
 #nowPlayingElapsedText {
-    font-size: smaller;
+    font-size: 24px;
 }
 
 #nowPlayingElapsedContainer {

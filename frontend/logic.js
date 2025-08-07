@@ -47,16 +47,17 @@ function trackElapsedTime() {
 function updateParty(party) {
     ui.guestCount().textContent = party.guestCount.toString();
     const nowPlaying = party.nowPlaying;
-    ui.nowPlayingTrack().textContent = nowPlaying.name;
+    ui.nowPlayingTrack().textContent = nowPlaying.title;
     ui.nowPlayingArtist().textContent = nowPlaying.artist;
     ui.nowPlayingElapsedBar().setAttribute('max', nowPlaying.duration);
     ui.nowPlayingElapsedBar().setAttribute('data-started', nowPlaying.started);
     updateElapsed();
-    const recommendation = party.recommendation;
-    ui.suggestedTrack().textContent = recommendation.name;
-    ui.suggestedArtist().textContent = recommendation.artist;
-    ui.supportButton().setAttribute('data-track', recommendation.trackId);
-    ui.detractButton().setAttribute('data-track', recommendation.trackId);
+    const suggestion = party.suggestion;
+    ui.suggestedTrack().textContent = suggestion.title;
+    ui.suggestedArtist().textContent = suggestion.artist;
+    ui.suggestionVotes().textContent = suggestion.votes;
+    ui.supportButton().setAttribute('data-track', suggestion.trackId);
+    ui.detractButton().setAttribute('data-track', suggestion.trackId);
 }
 
 function updateElapsed() {
@@ -69,10 +70,12 @@ function updateElapsed() {
 }
 
 function supportSuggestion(trackId) {
+    ui.suggestionVotes().textContent = (parseInt(ui.suggestionVotes().textContent) + 1).toString();
     http.postResource(`/api/party/${partyId}/guest/${name}/track/${trackId}/support`);
 }
 
 function detractSuggestion(trackId) {
+    ui.suggestionVotes().textContent = (parseInt(ui.suggestionVotes().textContent) - 1).toString();
     http.postResource(`/api/party/${partyId}/guest/${name}/track/${trackId}/detraction`);
 }
 

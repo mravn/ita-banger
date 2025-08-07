@@ -2,6 +2,7 @@ import express from 'express';
 import pg from 'pg';
 import dotenv from 'dotenv';
 import path from 'path';
+import { title } from 'process';
 
 dotenv.config();
 console.log('Connecting to database', process.env.PG_DATABASE);
@@ -33,22 +34,23 @@ server.get(/\/[a-zA-Z0-9-_/]+/, onFallback);
 server.listen(port, onServerReady);
 
 const tracks = [
-  { trackId: 0, name: "Blinding Lights", artist: "The Weeknd", duration: 20004 },
-  { trackId: 1, name: "Shape of You", artist: "Ed Sheeran", duration: 23371 },
-  { trackId: 2, name: "Rolling in the Deep", artist: "Adele", duration: 22829 },
-  { trackId: 3, name: "Bad Guy", artist: "Billie Eilish", duration: 19408 },
-  { trackId: 4, name: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars", duration: 26929 },
-  { trackId: 5, name: "Can't Feel My Face", artist: "The Weeknd", duration: 21394 },
-  { trackId: 6, name: "Levitating", artist: "Dua Lipa", duration: 20306 },
-  { trackId: 7, name: "Radioactive", artist: "Imagine Dragons", duration: 18600 },
-  { trackId: 8, name: "Happy", artist: "Pharrell Williams", duration: 23394 },
-  { trackId: 9, name: "Old Town Road", artist: "Lil Nas X", duration: 15700 },
+  { trackId: 10, title: "Blinding Lights", artist: "The Weeknd", duration: 20004 },
+  { trackId: 21, title: "Shape of You", artist: "Ed Sheeran", duration: 23371 },
+  { trackId: 12, title: "Rolling in the Deep", artist: "Adele", duration: 22829 },
+  { trackId: 43, title: "Bad Guy", artist: "Billie Eilish", duration: 19408 },
+  { trackId: 54, title: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars", duration: 26929 },
+  { trackId: 75, title: "Can't Feel My Face", artist: "The Weeknd", duration: 21394 },
+  { trackId: 96, title: "Levitating", artist: "Dua Lipa", duration: 20306 },
+  { trackId: 37, title: "Radioactive", artist: "Imagine Dragons", duration: 18600 },
+  { trackId: 28, title: "Happy", artist: "Pharrell Williams", duration: 23394 },
+  { trackId: 49, title: "Old Town Road", artist: "Lil Nas X", duration: 15700 },
 ];
+const trackMap = new Map(tracks.map((t) => [t.trackId, t]));
 
 function trackElapsedTimes() {
     const now = Date.now();
     parties.forEach((party) => {
-        const track = tracks[party.nowPlaying.trackId];
+        const track = trackMap.get(party.nowPlaying.trackId);
         const started = party.nowPlaying.started;
         const elapsed = now - started;
         if (track.duration < elapsed) {
@@ -66,12 +68,9 @@ function ensurePartyExists(partyId, guest) {
 
 function createNewParty(partyId) {
     const party = {
+        partyId,
         guests: new Set(),
-        nowPlaying: null,
-        supported: new Set(),
-        detracted: new Set(),
-        alreadyPlayed: new Set(),
-        pool: new Set(tracks.map((track) => track.trackId)),
+        votes: new Map(),
     };
     selectNextTrack(party);
     parties.set(partyId, party);
@@ -92,75 +91,65 @@ async function onGetParty(request, response) {
     const partyId = request.params.partyId;
     const guest = request.params.guest;
     const party = ensurePartyExists(partyId, guest);
-    const track = tracks[party.nowPlaying.trackId];
-    const started = party.nowPlaying.started;
-    const recommendation = pickRandomFromPrioritized([party.pool.union(party.supported).union(party.detracted), party.alreadyPlayed]);
+    const playingTrack = trackMap.get(party.nowPlaying.trackId);
+    const suggestedTrack = pickRandom(tracks);
     response.json({
         partyId,
         guestCount: party.guests.size,
         nowPlaying: {
-            started,
-            ...track,
+            started: party.nowPlaying.started,
+            ...playingTrack,
         },
-        recommendation: tracks[recommendation],
+        suggestion: {
+            votes: party.votes.get(suggestedTrack.trackId) || 0,
+            ...suggestedTrack,
+        }
     });
 }
 
 async function onPostTrackSupport(request, response) {
-    const partyId = request.params.partyId;
-    const guest = request.params.guest;
-    const trackId = request.params.trackId;
-    const party = ensurePartyExists(partyId, guest);
-    if (party.detracted.has(trackId)) {
-        party.detracted.delete(trackId);
-        party.pool.add(trackId);
-    } else if (party.pool.has(trackId)) {
-        party.pool.delete(trackId);
-        party.supported.add(trackId);
-    }
-    response.end();
+    return onPostTrackVote(request, response, +1);
 }
 
 async function onPostTrackDetraction(request, response) {
+    return onPostTrackVote(request, response, -1);
+}
+
+async function onPostTrackVote(request, response, vote) {
     const partyId = request.params.partyId;
     const guest = request.params.guest;
-    const trackId = request.params.trackId;
+    const trackId = parseInt(request.params.trackId);
     const party = ensurePartyExists(partyId, guest);
-    if (party.supported.has(trackId)) {
-        party.supported.delete(trackId);
-        party.pool.add(trackId);
-    } else if (party.pool.has(trackId)) {
-        party.pool.delete(trackId);
-        party.detracted.add(trackId);
+    const oldVotes = party.votes.get(trackId) || 0;
+    const newVotes = oldVotes + vote;
+    if (newVotes === 0) {
+        party.votes.delete(trackId);
+    } else {
+        party.votes.set(trackId, newVotes);
     }
     response.end();
 }
 
 function selectNextTrack(party) {
-    if (party.alreadyPlayed.size === tracks.length) {
-        party.alreadyPlayed.clear();
-        party.pool = new Set(tracks.map((track) => track.trackId));
-    }
-    const trackId = pickRandomFromPrioritized([party.supported, party.pool, party.alreadyPlayed, party.detracted]);
-    party.pool.delete(trackId);
-    party.supported.delete(trackId);
-    party.detracted.delete(trackId);
-    party.alreadyPlayed.add(trackId);
-    party.nowPlaying = { trackId, started: Date.now() };
-}
-
-function pickRandomFromPrioritized(trackIdSets) {
-    for (const trackIdSet of trackIdSets) {
-        if (trackIdSet.size > 0) {
-            return pickRandom(trackIdSet);
+    let bestTrackId = null;
+    let bestVotes = 0;
+    let worstVotes = 0
+    for (const [trackId, votes] of party.votes.entries()) {
+        if (bestVotes < votes) {
+            bestVotes = votes;
+            bestTrackId = trackId;
+        }
+        if (votes < worstVotes) {
+            worstVotes = votes;
         }
     }
-    throw new Error('Cannot pick random from', trackIdSets);
+    const track = (bestVotes === 0) ? pickRandom(tracks) : trackMap.get(bestTrackId);
+    party.votes.set(track.trackId, worstVotes - 1);
+    party.nowPlaying = { trackId: track.trackId, started: Date.now() };
 }
 
-function pickRandom(iterable) {
-    const a = Array.isArray(iterable) ? iterable : [...iterable];
-    return a[Math.floor(Math.random() * a.length)];
+function pickRandom(array) {
+    return array[Math.floor(Math.random() * array.length)];
 }
 
 async function onFallback(request, response) {
