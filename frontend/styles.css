@@ -14,7 +14,7 @@ p {
     margin: auto;
 }
 
-#partyContainer, #partySize, #nowPlayingContainer, #suggestionContainer, #qr {
+#partyContainer, #partySize, #nowPlayingContainer, #suggestionContainer {
     margin-top: 1rem;
 }
 
@@ -39,7 +39,7 @@ p {
 }
 
 #qr {
-    min-width: 10ch;
+    min-width: 12ch;
     margin-top: -8px;
     margin-right: -10px;
 }
