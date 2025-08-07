@@ -7,24 +7,21 @@ body {
 
 p {
     margin: 0;
+    line-height: 1.2;
 }
 
 #content {
+    padding-top: 2rem;
     max-width: min(80vw, 50ch);
     margin: auto;
 }
 
-#content, #partyContainer, #partySize, #nowPlayingContainer, #suggestionContainer {
+#content, #partyContainer, #nowPlayingContainer, #nowPlayingElapsedBar, #suggestionContainer {
     margin-top: 1rem;
 }
 
-#name, #guestCount, .track, .artist, #nowPlayingElapsedText {
+#name, #partyCode, #guestCount, .track, .artist, #nowPlayingElapsedText {
     color: greenyellow;
-}
-
-#partyCode {
-    color: aqua;
-    font-family: monospace;
 }
 
 #partyContainer {
@@ -34,6 +31,7 @@ p {
 }
 
 #partyLineContainer {
+    width: 75%;
     display: flex;
     flex-direction: column;
 }
@@ -58,8 +56,6 @@ p {
     width: 75%;
     height: 5px;
     border: none;
-    margin-top: 0.3rem;
-    margin-right: 1ch;
     accent-color: greenyellow;
 }
 
