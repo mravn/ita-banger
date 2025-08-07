@@ -14,11 +14,11 @@ p {
     margin: auto;
 }
 
-#welcome, #invite, #partySize, #nowPlayingContainer, #suggestionContainer {
+#partyContainer, #partySize, #nowPlayingContainer, #suggestionContainer, #qr {
     margin-top: 1rem;
 }
 
-#guest {
+#name, #guestCount, .track, .artist, #nowPlayingElapsedText {
     color: greenyellow;
 }
 
@@ -27,22 +27,31 @@ p {
     font-family: monospace;
 }
 
-#guestCount {
-    color: greenyellow;
+#partyContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+}
+
+#partyLineContainer {
+    display: flex;
+    flex-direction: column;
+}
+
+#qr {
+    min-width: 10ch;
+    margin-top: -8px;
+    margin-right: -10px;
+}
+
+#qr path {
+    fill: #ccc;
 }
 
 .oneliner {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-}
-
-.track {
-    color: greenyellow;
-}
-
-.artist {
-    color: greenyellow;
 }
 
 #nowPlayingElapsedBar {
@@ -55,7 +64,6 @@ p {
 }
 
 #nowPlayingElapsedText {
-    color: greenyellow;
     font-size: smaller;
 }
 
@@ -94,11 +102,14 @@ button:hover {
     cursor: pointer;
 }
 
+#support, #detract {
+    min-width: 45%;
+    font-size: larger;
+}
+
 #support {
     background-color: #464;
     border: 1px solid #464;
-    min-width: 45%;
-    font-size: larger;
 }
 
 #support:hover {
@@ -108,8 +119,6 @@ button:hover {
 #detract {
     background-color: #644;
     border: 1px solid #644;
-    min-width: 45%;
-    font-size: larger;
 }
 
 #detract:hover {
@@ -139,5 +148,9 @@ button:hover {
     #support, #detract {
         min-width: 3ch;
         font-size: inherit;
+    }
+
+    #qr {
+        max-width: 5rem;
     }
 }

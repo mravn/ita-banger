@@ -1,6 +1,7 @@
 import express from 'express';
 import pg from 'pg';
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
 console.log('Connecting to database', process.env.PG_DATABASE);
@@ -28,6 +29,7 @@ server.get('/api/party/:partyId/guest/:guest', onGetParty);
 server.delete('/api/party/:partyId/guest/:guest', onDeleteParty);
 server.post('/api/party/:partyId/guest/:guest/track/:trackId/support', onPostTrackSupport);
 server.post('/api/party/:partyId/guest/:guest/track/:trackId/detraction', onPostTrackDetraction);
+server.get(/\/[a-zA-Z0-9-_/]+/, onFallback);
 server.listen(port, onServerReady);
 
 const tracks = [
@@ -159,6 +161,10 @@ function pickRandomFromPrioritized(trackIdSets) {
 function pickRandom(iterable) {
     const a = Array.isArray(iterable) ? iterable : [...iterable];
     return a[Math.floor(Math.random() * a.length)];
+}
+
+async function onFallback(request, response) {
+    response.sendFile(path.join(import.meta.dirname, '..', 'frontend', 'index.html'));
 }
 
 function onEachRequest(request, response, next) {

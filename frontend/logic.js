@@ -1,22 +1,21 @@
 import * as ui from './ui.js';
 import * as http from './http.js';
 
-let partyId = crypto.randomUUID().substring(0, 4);
+let partyId = null;
 let name = null;
+let renderCount = 0;
+let updatePartyTimeout = undefined;
+let updateElapsedTimeout = undefined;
 
-export function initialize() {
-    name = localStorage.getItem('name');
-    if (!name) {
-        name = prompt('What is your name?');
-        localStorage.setItem('name', name);
-    }
-    const storedPartyId = localStorage.getItem('partyId');
-    if (storedPartyId) {
-        partyId = storedPartyId;
-    } else {
-        localStorage.setItem('partyId', partyId);
-    }
-    ui.renderParty(partyId, name);
+export async function render(newPartyId, newName) {
+    partyId = newPartyId;
+    name = newName;
+    renderCount += 1
+    const contentDiv = ui.contentDiv();
+    contentDiv.innerHTML = await http.getHtmlResource('./party.htm');
+    ui.name().textContent = name;
+    ui.partyCode().textContent = partyId;
+    ui.qr().innerHTML = qr.encodeQR(window.location.href, 'svg');
     wireUpParty();
 }
 
@@ -24,19 +23,25 @@ function wireUpParty() {
     ui.supportButton().onclick = (event) => supportSuggestion(event.target.getAttribute('data-track'));
     ui.detractButton().onclick = (event) => detractSuggestion(event.target.getAttribute('data-track'));
     ui.joinOtherButton().onclick = (event) => leaveParty();
+    clearTimeout(updatePartyTimeout);
+    clearTimeout(updateElapsedTimeout);
     pollForPartyUpdates();
     trackElapsedTime();
 }
 
 async function pollForPartyUpdates() {
-    const party = await http.getResource(`/api/party/${partyId}/guest/${name}`);
+    const expectedRenderCount = renderCount;
+    const party = await http.getJsonResource(`/api/party/${partyId}/guest/${name}`);
+    if (renderCount !== expectedRenderCount) {
+        return;
+    }
     updateParty(party);
-    setTimeout(async () => await pollForPartyUpdates(partyId), 3000);
+    updatePartyTimeout = setTimeout(async () => await pollForPartyUpdates(), 3000);
 }
 
 function trackElapsedTime() {
     updateElapsed();
-    setTimeout(() => trackElapsedTime(), 100);
+    updateElapsedTimeout = setTimeout(() => trackElapsedTime(), 50);
 }
 
 function updateParty(party) {
@@ -71,14 +76,15 @@ function detractSuggestion(trackId) {
     http.postResource(`/api/party/${partyId}/guest/${name}/track/${trackId}/detraction`);
 }
 
-function leaveParty() {
-    http.deleteResource(`/api/party/${partyId}/guest/${name}`);
+async function leaveParty() {
+    await http.deleteResource(`/api/party/${partyId}/guest/${name}`);
     joinOtherParty();
 }
 
 function joinOtherParty() {
-    partyId = prompt('Which party now?');
-    localStorage.setItem('partyId', partyId);
-    ui.renderParty(partyId, name);
-    wireUpParty();
+    do {
+        partyId = prompt('Which party now?\nExample code: a3fd').toLowerCase();
+    } while (!partyId.match(/^[a-z0-9]{4}$/));
+    history.pushState(null, '', `/${partyId}`);
+    render(partyId, name);
 }

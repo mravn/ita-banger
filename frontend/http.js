@@ -7,7 +7,7 @@ export async function putResource(path) {
     }
 }
 
-export async function getResource(path) {
+export async function getJsonResource(path) {
     const response = await fetch(path, {
         method: 'GET',
         headers: {
@@ -20,6 +20,18 @@ export async function getResource(path) {
     return await response.json();
 }
 
+export async function getHtmlResource(path) {
+    const response = await fetch(path, {
+        method: 'GET',
+        headers: {
+            'Accept': 'text/html',
+        },
+    });
+    if (!response.ok) {
+        throw new Error(`GET ${path} resulted in ${response.status} ${response.statusText}`);
+    }
+    return await response.text();
+}
 export async function postResource(path) {
     const response = await fetch(path, {
         method: 'POST',
