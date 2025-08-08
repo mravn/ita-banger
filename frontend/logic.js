@@ -5,6 +5,7 @@ let partyId = null;
 let name = null;
 let renderCount = 0;
 let updatePartyTimeout = undefined;
+let updateSuggestionTimeout = undefined;
 let updateElapsedTimeout = undefined;
 
 export async function render(newPartyId, newName) {
@@ -24,8 +25,10 @@ function wireUpParty() {
     ui.detractButton().onclick = (event) => detractSuggestion(event.target.getAttribute('data-track'));
     ui.joinOtherButton().onclick = (event) => leaveParty();
     clearTimeout(updatePartyTimeout);
+    clearTimeout(updateSuggestionTimeout);
     clearTimeout(updateElapsedTimeout);
     pollForPartyUpdates();
+    pollForSuggestions();
     trackElapsedTime();
 }
 
@@ -36,7 +39,17 @@ async function pollForPartyUpdates() {
         return;
     }
     updateParty(party);
-    updatePartyTimeout = setTimeout(async () => await pollForPartyUpdates(), 3000);
+    updatePartyTimeout = setTimeout(async () => await pollForPartyUpdates(), 1000);
+}
+
+async function pollForSuggestions() {
+    const expectedRenderCount = renderCount;
+    const suggestion = await http.getJsonResource(`/api/party/${partyId}/guest/${name}/suggestion`);
+    if (renderCount !== expectedRenderCount) {
+        return;
+    }
+    updateSuggestion(suggestion);
+    updateSuggestionTimeout = setTimeout(async () => await pollForSuggestions(), 3000);
 }
 
 function trackElapsedTime() {
@@ -52,7 +65,9 @@ function updateParty(party) {
     ui.nowPlayingElapsedBar().setAttribute('max', nowPlaying.duration);
     ui.nowPlayingElapsedBar().setAttribute('data-started', nowPlaying.started);
     updateElapsed();
-    const suggestion = party.suggestion;
+}
+
+function updateSuggestion(suggestion) {
     ui.suggestedTrack().textContent = suggestion.title;
     ui.suggestedArtist().textContent = suggestion.artist;
     ui.suggestionVotes().textContent = suggestion.votes;

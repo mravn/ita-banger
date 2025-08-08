@@ -17,33 +17,52 @@ console.log('Database connection established on', dbResult.rows[0].now);
 
 console.log('Recreating tables...');
 await db.query(`
-drop table if exists albums;
-drop table if exists artists;
+drop table if exists party_votes;
+drop table if exists party_guest;
+drop table if exists parties;
+drop table if exists tracks;
+drop table if exists guests;
 
-create table artists (
-	artist_id   integer unique not null,
-	nationality char(2),
-	stage_name  text not null
+create table guests (
+    guest_id varchar(32) primary key
 );
 
-create table albums (
-	album_id         integer unique not null,
-	artist_id        integer references artists (artist_id),
-	release_date     date not null,
-	title            text not null,
-    riaa_certificate text
+create table tracks (
+    track_id bigint primary key,
+	title text not null,
+	artist text not null,
+	duration int not null,
+	popularity int not null
+);
+create index tracks_popularity on tracks (popularity);
+
+create table parties (
+    party_id char(4) primary key,
+	track_id bigint references tracks,
+	started bigint
+);
+
+create table party_guest (
+    party_id char(4) references parties,
+	guest_id varchar(32) references guests,
+	primary key (party_id, guest_id)
+);
+
+create table party_votes (
+    party_id char(4) references parties,
+	track_id bigint references tracks,
+	votes int not null,
+	primary key (party_id, track_id)
 );
 `);
 console.log('Tables recreated.');
 
-console.log('Copying data from CSV files...');
-await upload(db, 'db/artists.csv', `
-	copy artists (artist_id, stage_name, nationality)
-	from stdin
-	with csv`);
-await upload(db, 'db/albums.csv', `
-	copy albums (album_id, title, artist_id, release_date, riaa_certificate)
+console.log('Importing data from CSV files...');
+await upload(db, 'db/short-tracks.csv', `
+	copy tracks (track_id, title, artist, duration, popularity)
 	from stdin
 	with csv header`);
+console.log('Data imported.');
+
 await db.end();
-console.log('Data copied.');
+console.log('Reset complete.');
