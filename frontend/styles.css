@@ -115,6 +115,7 @@ button:hover {
 
 #support:hover {
     background-color: #484;
+    border: 1px solid #484;
 }
 
 #detract {
@@ -124,6 +125,7 @@ button:hover {
 
 #detract:hover {
     background-color: #844;
+    border: 1px solid #844;
 }
 
 #joinOther {
